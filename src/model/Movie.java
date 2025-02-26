@@ -1,30 +1,34 @@
 package model;
 
+import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 
-public class Movie {
+public class Movie implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final String DATE_FORMAT = "MMMM d, yyyy";
+    private static final Locale DATE_LOCALE = Locale.US;
+
     private int show_id;
     private String type;
     private String title;
     private String director;
     private String[] cast;
     private String country;
-    private String date_added;
-    private int release_year;
+    private Date date_added;
+    private Integer release_year;
     private String rating;
     private String duration;
     private String listed_in;
     private String description;
 
-    public Movie () { } 
+    public Movie(int show_id) {
+        this.show_id = show_id;
+    }
 
-    public Movie(int show_id, String type, String title, String director, String[] cast, String country, String date_added, int release_year, String rating, String duration, String listed_in, String description) {
-        setId(show_id);
+    public Movie(int show_id, String type, String title, String director, String[] cast, String country, String date_added, Integer release_year, String rating, String duration, String listed_in, String description) {
+        this.show_id = show_id;
         setType(type);
         setTitle(title);
         setDirector(director);
@@ -40,10 +44,6 @@ public class Movie {
 
     public int getId() {
         return show_id;
-    }
-
-    public void setId(int show_id) {
-        this.show_id = show_id;
     }
 
     public String getType() {
@@ -71,11 +71,11 @@ public class Movie {
     }
 
     public String[] getCast() {
-        return cast;
+        return cast != null ? cast.clone() : new String[0];
     }
 
     public void setCast(String[] cast) {
-        this.cast = cast;
+        this.cast = cast != null ? cast.clone() : null;
     }
 
     public String getCountry() {
@@ -87,18 +87,32 @@ public class Movie {
     }
 
     public String getDateAdded() {
-        return date_added;
+        if (date_added == null) {
+            return "";
+        }
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, DATE_LOCALE);
+        return formatter.format(date_added);
     }
 
     public void setDateAdded(String date_added) {
-        this.date_added = date_added;
+        if (date_added == null || date_added.isEmpty()) {
+            this.date_added = null;
+            return;
+        }
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, DATE_LOCALE);
+            this.date_added = formatter.parse(date_added);
+        } catch (ParseException e) {
+            System.err.println("Erro ao converter a data: " + e.getMessage());
+            this.date_added = null;
+        }
     }
 
-    public int getReleaseYear() {
+    public Integer getReleaseYear() {
         return release_year;
     }
 
-    public void setReleaseYear(int release_year) {
+    public void setReleaseYear(Integer release_year) {
         this.release_year = release_year;
     }
 
@@ -134,21 +148,22 @@ public class Movie {
         this.description = description;
     }
 
+    @Override
     public String toString() {
-        return "\nMovie{" +
-                "show_id=" + show_id +
-                ", type='" + type + '\'' +
-                ", title='" + title + '\'' +
-                ", director='" + director + '\'' +
-                ", cast=" + Arrays.toString(cast) +
-                ", country='" + country + '\'' +
-                ", date_added='" + date_added + '\'' +
-                ", release_year=" + release_year +
-                ", rating='" + rating + '\'' +
-                ", duration='" + duration + '\'' +
-                ", listed_in='" + listed_in + '\'' +
-                ", description='" + description + '\'' +
-                '}';
+        return "Movie{" +
+               "show_id=" + show_id +
+               ", type='" + (type != null ? type : "") + '\'' +
+               ", title='" + (title != null ? title : "") + '\'' +
+               ", director='" + (director != null ? director : "") + '\'' +
+               ", cast=" + (cast != null ? Arrays.toString(cast) : "[]") +
+               ", country='" + (country != null ? country : "") + '\'' +
+               ", date_added='" + getDateAdded() + '\'' +
+               ", release_year=" + (release_year != null ? release_year : "") +
+               ", rating='" + (rating != null ? rating : "") + '\'' +
+               ", duration='" + (duration != null ? duration : "") + '\'' +
+               ", listed_in='" + (listed_in != null ? listed_in : "") + '\'' +
+               ", description='" + (description != null ? description : "") + '\'' +
+               '}';
     }
 
     // Gravando os dados dos filmes em um arquivo binário
@@ -156,21 +171,22 @@ public class Movie {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeInt(show_id);
-        dos.writeUTF(type);
-        dos.writeUTF(title);
-        dos.writeUTF(director);
-        for (String c : cast) {
-            byte[] cBytes = c.getBytes("UTF-8");
-            dos.writeInt(cBytes.length);
-            dos.writeUTF(c);
+        dos.writeUTF(type != null ? type : "");
+        dos.writeUTF(title != null ? title : "");
+        dos.writeUTF(director != null ? director : "");
+        dos.writeInt(cast != null ? cast.length : 0);
+        if (cast != null) {
+            for (String c : cast) {
+                dos.writeUTF(c != null ? c : "");
+            }
         }
-        dos.writeUTF(country);
-        dos.writeUTF(date_added);
-        dos.writeInt(release_year);
-        dos.writeUTF(rating);
-        dos.writeUTF(duration);
-        dos.writeUTF(listed_in);
-        dos.writeUTF(description);
+        dos.writeUTF(country != null ? country : "");
+        dos.writeLong(date_added != null ? date_added.getTime() : -1);
+        dos.writeInt(release_year != null ? release_year : -1);
+        dos.writeUTF(rating != null ? rating : "");
+        dos.writeUTF(duration != null ? duration : "");
+        dos.writeUTF(listed_in != null ? listed_in : "");
+        dos.writeUTF(description != null ? description : "");
         return baos.toByteArray();
     }
 
@@ -188,14 +204,13 @@ public class Movie {
             cast[i] = dis.readUTF();
         }
         country = dis.readUTF();
-        date_added = dis.readUTF();
-        release_year = dis.readInt();
+        long dateTime = dis.readLong();
+        date_added = dateTime != -1 ? new Date(dateTime) : null;
+        int year = dis.readInt();
+        release_year = year != -1 ? year : null;
         rating = dis.readUTF();
         duration = dis.readUTF();
         listed_in = dis.readUTF();
         description = dis.readUTF();
     }
-
 }
-
-
