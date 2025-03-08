@@ -2,6 +2,8 @@ package file;
 
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
+import java.util.List;
+
 import model.*;
 
 public class FileManager<T extends Movie> {  // Renomeado para FileManager
@@ -22,20 +24,60 @@ public class FileManager<T extends Movie> {  // Renomeado para FileManager
 
         this.nomeArquivo = ".\\dados\\"+na+"\\"+na+".db";
         this.construtor = c;
+
+        // Inicializar o índice direto antes de abrir o arquivo
+        indiceDireto = new HashExtensivel<>(ParIDEndereco.class.getConstructor(), 4, ".\\dados\\"+na+"\\"+na+".d.db", ".\\dados\\"+na+"\\"+na+".c.db");
+
         arquivo = new RandomAccessFile(this.nomeArquivo, "rw");
         if(arquivo.length() < TAM_CABECALHO) {
             // Inicializa o arquivo, criando seu cabeçalho
             arquivo.writeInt(0);   // último ID
             arquivo.writeLong(-1);   // lista de registros marcados para exclusão 
+
+            // Chama o método para ler e inserir dados do CSV
+            System.out.println("Inicializando o arquivo com os dados do CSV...");
+            initializeFromCSV("dataset/netflix_titles_modified.csv");
         }
 
-        indiceDireto = new HashExtensivel<>(
-            ParIDEndereco.class.getConstructor(), 
-            4, 
-            ".\\dados\\"+na+"\\"+na+".d.db", // diretório 
-            ".\\dados\\"+na+"\\"+na+".c.db"  // cestos
-        );
+         // Adicionando a depuração para o índice direto
+        System.out.println("Inicializando o índice direto...");
+        if (indiceDireto != null) {
+            System.out.println("Índice direto inicializado com sucesso.");
+        } else {
+            System.out.println("Falha ao inicializar o índice direto.");
+        }
     }
+
+    // Método que lê os dados do CSV e cria os objetos
+    private void initializeFromCSV(String csvFilePath) throws Exception {
+        System.out.println("Entrou na função...");
+        readCSV csvReader = new readCSV(csvFilePath);
+        List<Movie> movies = csvReader.read();  // Lê os dados do CSV
+    
+        // Insere cada filme no arquivo, criando o objeto T diretamente
+        for (Movie movie : movies) {
+            // Criar um novo objeto T a partir do construtor genérico
+            T obj = construtor.newInstance();
+            // Preencher o objeto T com os dados do CSV
+            obj.setId(movie.getId());
+            obj.setType(movie.getType());
+            obj.setTitle(movie.getTitle());
+            obj.setDirector(movie.getDirector());
+            obj.setCast(movie.getCast());
+            obj.setCountry(movie.getCountry());
+            obj.setDateAdded(movie.getDateAdded());
+            obj.setReleaseYear(movie.getReleaseYear());
+            obj.setRating(movie.getRating());
+            obj.setDuration(movie.getDuration());
+            obj.setListedIn(movie.getListedIn());
+            obj.setDescription(movie.getDescription());
+            
+            System.out.println("Objeto Criado...");
+    
+            this.create(obj);  // Insere o objeto T no banco de dados
+        }
+    }
+    
 
     public int create(T obj) throws Exception {
         arquivo.seek(0);

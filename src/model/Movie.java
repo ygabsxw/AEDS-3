@@ -110,7 +110,7 @@ public class Movie implements Serializable {
         if (date_added == null) {
             return "";
         }
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, DATE_LOCALE);
+        SimpleDateFormat formatter = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
         return formatter.format(date_added);
     }
 
@@ -120,8 +120,8 @@ public class Movie implements Serializable {
             return;
         }
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, DATE_LOCALE);
-            this.date_added = formatter.parse(date_added);
+            SimpleDateFormat formatter = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
+            this.date_added = formatter.parse(date_added.trim());
         } catch (ParseException e) {
             System.err.println("Erro ao converter a data: " + e.getMessage());
             this.date_added = null;
