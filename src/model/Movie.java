@@ -23,6 +23,22 @@ public class Movie implements Serializable {
     private String listed_in;
     private String description;
 
+    public Movie() {
+        this.show_id = -1;
+        this.type = "";
+        this.title = "";
+        this.director = "";
+        this.cast = new String[0];
+        this.country = "";
+        this.date_added = null;
+        this.release_year = null;
+        this.rating = "";
+        this.duration = "";
+        this.listed_in = "";
+        this.description = "";
+    }
+    
+
     public Movie(int show_id) {
         this.show_id = show_id;
     }
@@ -40,6 +56,10 @@ public class Movie implements Serializable {
         setDuration(duration);
         setListedIn(listed_in);
         setDescription(description);
+    }
+
+    public void setId(int id) {
+        this.show_id = id;
     }
 
     public int getId() {

@@ -1,17 +1,18 @@
-import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import file.*;
 
 import model.Movie;
 
 public class MovieMenu {
-    File<Movie> movieFile;
+    FileManager<Movie> movieFile;
     private static Scanner sc = new Scanner(System.in);
 
-    public MovieMenu() {
-        movieFile = new File<>("movies", Movie.class.getConstructor());
+    public MovieMenu() throws Exception {
+        movieFile = new FileManager<>("movies", Movie.class.getConstructor());
     }
+    
 
     public void menu() {
 
@@ -332,10 +333,10 @@ public class MovieMenu {
         if (movie != null) {
             System.out.println("\nMovie details:");
             System.out.println("----------------------");
-            System.out.printf("Name......: %s%n", movie.type);
-            System.out.printf("CPF.......: %s%n", movie.cpf);
-            System.out.printf("Salário...: R$ %.2f%n", movie.salario);
-            System.out.printf("Nascimento: %s%n", movie.nascimento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            // System.out.printf("Name......: %s%n", movie.type);
+            // System.out.printf("CPF.......: %s%n", movie.cpf);
+            // System.out.printf("Salário...: R$ %.2f%n", movie.salario);
+            // System.out.printf("Nascimento: %s%n", movie.nascimento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             System.out.println("----------------------");
         }
     }
