@@ -333,10 +333,33 @@ public class MovieMenu {
         if (movie != null) {
             System.out.println("\nMovie details:");
             System.out.println("----------------------");
-            // System.out.printf("Name......: %s%n", movie.type);
-            // System.out.printf("CPF.......: %s%n", movie.cpf);
-            // System.out.printf("Salário...: R$ %.2f%n", movie.salario);
-            // System.out.printf("Nascimento: %s%n", movie.nascimento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            System.out.printf("Type......: %s%n", movie.getType());
+            System.out.printf("Title.....: %s%n", movie.getTitle());
+            System.out.printf("Director..: %s%n", movie.getDirector());
+            
+            // Exibir elenco
+            String[] cast = movie.getCast();
+            if (cast.length > 0) {
+                System.out.print("Cast......: ");
+                for (int i = 0; i < cast.length; i++) {
+                    System.out.print(cast[i].trim());
+                    if (i < cast.length - 1) {
+                        System.out.print(", ");
+                    }
+                }
+                System.out.println();
+            } else {
+                System.out.println("Cast......: Not specified");
+            }
+            
+            System.out.printf("Country...: %s%n", movie.getCountry());
+            System.out.printf("Date Added: %s%n", movie.getDateAdded());
+            System.out.printf("Release Year: %d%n", movie.getReleaseYear());
+            System.out.printf("Rating....: %s%n", movie.getRating());
+            System.out.printf("Duration..: %s%n", movie.getDuration());
+            System.out.printf("Listed In.: %s%n", movie.getListedIn());
+            System.out.printf("Description: %s%n", movie.getDescription());
+            
             System.out.println("----------------------");
         }
     }
