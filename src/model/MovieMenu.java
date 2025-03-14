@@ -1,11 +1,12 @@
+package model;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
+import database.algorithms.externalOrdering.ExternalSort;
 import file.*;
-import model.Movie;
 
 public class MovieMenu {
     FileManager<Movie> movieFile;

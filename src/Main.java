@@ -1,5 +1,7 @@
 import java.util.Scanner;
 
+import model.MovieMenu;
+
 
 public class Main {
 
