@@ -1,4 +1,3 @@
-
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -364,7 +363,7 @@ public class MovieMenu {
     
             String originalFile = "src/database/data/movies.db";
             String sortedFile = "src/database/data/movies_sorted.db";
-            int blockSize = 100;
+            int blockSize = 1000;
     
             ExternalSort.splitFileIntoBlocks(originalFile, blockSize);
     
