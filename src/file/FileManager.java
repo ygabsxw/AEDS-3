@@ -1,6 +1,7 @@
 package file;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
 import model.*;
@@ -93,23 +94,24 @@ public class FileManager<T extends Movie> {
         return null;
     }
 
-    public T[] readAll() throws Exception {
-        arquivo.seek(TAM_CABECALHO);
-        int n = 0;
-        T []obj = (T[]) new Movie[10000];
-        while (arquivo.getFilePointer() < arquivo.length()) {
-            byte lapide = arquivo.readByte();
-            short tam = arquivo.readShort();
-            byte[] b = new byte[tam];
-            arquivo.read(b);
-            if (lapide == ' ') {
-                obj[n] = construtor.newInstance();
-                obj[n].fromByteArray(b);
-                n++;
-            }
+    public List<T> readAll() throws Exception {
+    arquivo.seek(TAM_CABECALHO);
+    List<T> lista = new ArrayList<>();
+
+    while (arquivo.getFilePointer() < arquivo.length()) {
+        byte lapide = arquivo.readByte();
+        short tam = arquivo.readShort();
+        byte[] b = new byte[tam];
+        arquivo.read(b);
+
+        if (lapide == ' ') { // Registro válido
+            T obj = construtor.newInstance();
+            obj.fromByteArray(b);
+            lista.add(obj);
         }
-        return obj;
     }
+    return lista;
+}
 
     public boolean delete(int id) throws Exception {
         arquivo.seek(TAM_CABECALHO);

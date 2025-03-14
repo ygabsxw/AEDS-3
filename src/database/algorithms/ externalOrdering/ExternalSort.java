@@ -51,7 +51,7 @@ public class ExternalSort {
     
                 try {
                     Movie movie = new Movie();
-                    movie.fromByteArray(bytes); // Aqui pode estar o erro!
+                    movie.fromByteArray(bytes); 
                     block.add(movie);
                 } catch (Exception e) {
                     break; // Evita continuar lendo registros inválidos

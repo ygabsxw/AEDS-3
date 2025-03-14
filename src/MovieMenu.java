@@ -2,6 +2,7 @@
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
 
 import file.*;
@@ -338,23 +339,24 @@ public class MovieMenu {
     }
 
     public void listAllMovies() {
-       System.out.println("\nAll movies: ");
+    System.out.println("\nAll movies:");
 
-        try {
-            // Lê todos os registros do arquivo
-            Movie[] movies = movieFile.readAll();
-            if (movies != null) {
-                for (Movie movie : movies) {
-                    showMovie(movie);
-                }
-            } else {
-                System.out.println("No movies found.");
+    try {
+        // Obtém a lista de filmes
+        List<Movie> movies = movieFile.readAll();
+
+        if (!movies.isEmpty()) { // Verifica se a lista tem elementos
+            for (Movie movie : movies) {
+                showMovie(movie);
             }
-        } catch (Exception e) {
-            System.out.println("System error. Unable to list movies!");
-            e.printStackTrace();
+        } else {
+            System.out.println("No movies found.");
         }
+    } catch (Exception e) {
+        System.out.println("System error. Unable to list movies!");
+        e.printStackTrace();
     }
+}
 
     public void orderAllMovies() {
         try {
@@ -362,7 +364,7 @@ public class MovieMenu {
     
             String originalFile = "src/database/data/movies.db";
             String sortedFile = "src/database/data/movies_sorted.db";
-            int blockSize = 1000;
+            int blockSize = 100;
     
             ExternalSort.splitFileIntoBlocks(originalFile, blockSize);
     
