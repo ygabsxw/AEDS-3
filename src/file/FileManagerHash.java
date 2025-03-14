@@ -18,15 +18,17 @@ public class FileManagerHash<T extends Movie> {  // Renomeado para FileManager
         if(!d.exists())
             d.mkdir();
 
-        d = new java.io.File(".\\dados\\"+na);
+        d = new java.io.File(".\\dados\\"+na); 
         if(!d.exists())
             d.mkdir();
 
-        this.nomeArquivo = na+".db";
+        this.nomeArquivo = na+".db"; //movies.db guarda os dados dos filmes
         this.construtor = c;
 
         // Inicializar o índice direto antes de abrir o arquivo
         indiceDireto = new HashExtensivel<>(ParIDEndereco.class.getConstructor(), 4, na+".d.db", na+".c.db");
+        // movies.d.db permite acesso rapido aos registros por meio da hash
+        // movies.c.db gerencia a estrutura da hash
 
         arquivo = new RandomAccessFile(this.nomeArquivo, "rw");
         if(arquivo.length() < TAM_CABECALHO) {

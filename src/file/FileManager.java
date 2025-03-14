@@ -1,8 +1,8 @@
 package file;
-
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.io.File;
 import model.*;
 
 public class FileManager<T extends Movie> {
@@ -12,18 +12,16 @@ public class FileManager<T extends Movie> {
     Constructor<T> construtor;
 
     public FileManager(String na, Constructor<T> c) throws Exception {
-        java.io.File d = new java.io.File(".\\dados");
-        if (!d.exists()) d.mkdir();
+        // Define o caminho correto do diretório
+        File diretorio = new File("src/database/data/");
+        if (!diretorio.exists()) diretorio.mkdirs(); // Cria a pasta caso não exista
 
-        d = new java.io.File(".\\dados\\" + na);
-        if (!d.exists()) d.mkdir();
+        this.nomeArquivo = "src/database/data/" + na + ".db"; // Caminho correto
 
-        this.nomeArquivo = na + ".db";
-
-        // Criação do arquivo caso não exista
-        java.io.File file = new java.io.File(this.nomeArquivo);
+        // Criando o arquivo caso não exista
+        File file = new File(this.nomeArquivo);
         if (!file.exists()) {
-            file.createNewFile();  // Cria o arquivo vazio para evitar erro de FileNotFoundException
+            file.createNewFile();  // Cria o arquivo vazio
             System.out.println("Arquivo criado: " + this.nomeArquivo);
         }
 
@@ -93,6 +91,24 @@ public class FileManager<T extends Movie> {
             }
         }
         return null;
+    }
+
+    public T[] readAll() throws Exception {
+        arquivo.seek(TAM_CABECALHO);
+        int n = 0;
+        T []obj = (T[]) new Movie[10000];
+        while (arquivo.getFilePointer() < arquivo.length()) {
+            byte lapide = arquivo.readByte();
+            short tam = arquivo.readShort();
+            byte[] b = new byte[tam];
+            arquivo.read(b);
+            if (lapide == ' ') {
+                obj[n] = construtor.newInstance();
+                obj[n].fromByteArray(b);
+                n++;
+            }
+        }
+        return obj;
     }
 
     public boolean delete(int id) throws Exception {

@@ -1,8 +1,10 @@
+
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import file.*;
 
+import file.*;
 import model.Movie;
 
 public class MovieMenu {
@@ -12,7 +14,6 @@ public class MovieMenu {
     public MovieMenu() throws Exception {
         movieFile = new FileManager<>("movies", Movie.class.getConstructor());
     }
-    
 
     public void menu() {
 
@@ -24,6 +25,8 @@ public class MovieMenu {
             System.out.println(" 2 - Include");
             System.out.println(" 3 - Change");
             System.out.println(" 4 - Delete");
+            System.out.println(" 5 - List All");
+            System.out.println(" 6 - Order All");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -45,6 +48,12 @@ public class MovieMenu {
                     break;
                 case 4:
                     deleteMovie();
+                    break;
+                case 5:
+                    listAllMovies();
+                    break;
+                case 6:
+                    orderAllMovies();
                     break;
                 case 0:
                     break;
@@ -328,6 +337,51 @@ public class MovieMenu {
         }
     }
 
+    public void listAllMovies() {
+       System.out.println("\nAll movies: ");
+
+        try {
+            // Lê todos os registros do arquivo
+            Movie[] movies = movieFile.readAll();
+            if (movies != null) {
+                for (Movie movie : movies) {
+                    showMovie(movie);
+                }
+            } else {
+                System.out.println("No movies found.");
+            }
+        } catch (Exception e) {
+            System.out.println("System error. Unable to list movies!");
+            e.printStackTrace();
+        }
+    }
+
+    public void orderAllMovies() {
+        try {
+            System.out.println("\nSorting movies by ID...");
+    
+            String originalFile = "src/database/data/movies.db";
+            String sortedFile = "src/database/data/movies_sorted.db";
+            int blockSize = 1000;
+    
+            ExternalSort.splitFileIntoBlocks(originalFile, blockSize);
+    
+            int numBlocks = (int) Math.ceil((double) new File(originalFile).length() / blockSize);
+            ExternalSort.mergeSortedBlocks(numBlocks, sortedFile);
+    
+            File oldFile = new File(originalFile);
+            File newFile = new File(sortedFile);
+    
+            if (oldFile.delete() && newFile.renameTo(oldFile)) {
+                System.out.println("Movies successfully sorted by ID.");
+            } else {
+                System.out.println("Error renaming sorted file.");
+            }
+        } catch (Exception e) {
+            System.err.println("System error. Unable to sort movies!");
+            e.printStackTrace();
+        }
+    }
 
     public void showMovie(Movie movie) {
         if (movie != null) {
