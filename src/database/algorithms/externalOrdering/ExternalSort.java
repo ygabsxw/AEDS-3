@@ -1,149 +1,125 @@
 package database.algorithms.externalOrdering;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import file.FileManager;
+import model.Movie;
+import java.io.*;
 import java.util.*;
 
-import model.Movie;
-
 public class ExternalSort {
+    // Definição da constante que determina o número máximo de registros a serem carregados em memória.
+    private static final int MAX_RECORDS_IN_MEMORY = 1000;
+    private FileManager<Movie> fileManager;
 
-    // Divide o arquivo em blocos menores, ordena cada bloco e salva em arquivos temporários
-    public static void splitFileIntoBlocks(String fileName, int blockSize) throws IOException {
-        File file = new File(fileName);
-        if (!file.exists() || file.length() == 0) {
-            throw new IOException("Error: The movie file is empty or does not exist.");
-        }
-
-        long fileSize = file.length();
-        RandomAccessFile raf = new RandomAccessFile(file, "r");
-        int blockIndex = 0;
-
-        while (raf.getFilePointer() < fileSize) {
-            List<Movie> block = new ArrayList<>();
-
-            while (raf.getFilePointer() < fileSize && block.size() < blockSize) {
-                long pos = raf.getFilePointer();
-                if (pos + 3 > fileSize) break; // Evita ler um cabeçalho incompleto
-
-                byte lapide = raf.readByte();
-                short size = raf.readShort();
-
-                if (lapide != ' ') {
-                    raf.seek(pos + 3 + size);
-                    continue;
-                }
-
-                if (pos + 3 + size > fileSize) break; // Evita estouro de leitura
-
-                byte[] bytes = new byte[size];
-                raf.readFully(bytes);
-
-                try {
-                    Movie movie = new Movie();
-                    movie.fromByteArray(bytes);
-                    block.add(movie);
-                } catch (Exception e) {
-                    // Evita continuar lendo registros inválidos
-                }
-            }
-
-            if (!block.isEmpty()) {
-                try {
-                    saveSortedBlock(block, blockIndex);
-                    blockIndex++;
-                } catch (Exception e) {
-                    e.printStackTrace();  // Exibe erro no console sem interromper o programa
-                }
-            }
-        }
-
-        raf.close();
+    // Construtor que recebe um FileManager para realizar as operações de leitura e gravação.
+    public ExternalSort(FileManager<Movie> fileManager) {
+        this.fileManager = fileManager;
     }
 
-    // Salva um bloco ordenado em um arquivo temporário
-    private static void saveSortedBlock(List<Movie> block, int index) throws Exception {
-        File tempDir = new File("temp");
-        if (!tempDir.exists()) tempDir.mkdirs();
-
-        File tempFile = new File("temp/run_" + index + ".db");
-        RandomAccessFile runFile = new RandomAccessFile(tempFile, "rw");
-
-        block.sort(Comparator.comparingInt(Movie::getId));
-
-        for (Movie movie : block) {
-            byte[] bytes = movie.toByteArray();
-            if (bytes == null || bytes.length == 0) continue;
-
-            runFile.writeByte(' '); // Lápide
-            runFile.writeShort(bytes.length);
-            runFile.write(bytes);
-        }
-        runFile.close();
+    // Método principal para executar a ordenação externa.
+    public void sort() throws Exception {
+        // Criação das "corridas" iniciais (arquivos temporários) e ordenação inicial dos dados.
+        List<String> runFiles = createInitialRuns();
+        // Mescla os arquivos ordenados gerados nas corridas iniciais.
+        mergeRuns(runFiles);
     }
 
-    // Intercala os arquivos ordenados usando Heap e cria o arquivo final ordenado
-    public static void mergeSortedBlocks(int numBlocks, String finalFile) throws Exception {
-        PriorityQueue<HeapHelper> heap = new PriorityQueue<>(Comparator.comparingInt(e -> e.movie.getId()));
-        RandomAccessFile[] tempFiles = new RandomAccessFile[numBlocks];
+    // Cria os arquivos temporários com dados ordenados para cada "corrida" (run).
+    private List<String> createInitialRuns() throws Exception {
+        List<Movie> buffer = new ArrayList<>();  // Buffer temporário para armazenar filmes antes de escrever no arquivo.
+        List<String> runFiles = new ArrayList<>(); // Lista de arquivos temporários criados.
+        int runCount = 0; // Contador de corridas (arquivos temporários).
 
-        for (int i = 0; i < numBlocks; i++) {
-            File file = new File("temp/run_" + i + ".db");
-            if (!file.exists() || file.length() == 0) continue;
-
-            tempFiles[i] = new RandomAccessFile(file, "r");
-            Movie movie = readNextMovie(tempFiles[i]);
-            if (movie != null) {
-                heap.add(new HeapHelper(movie, i));
+        // Lê todos os filmes do arquivo de dados utilizando o fileManager.
+        for (Movie movie : fileManager.readAll()) {
+            buffer.add(movie); // Adiciona o filme ao buffer.
+            if (buffer.size() >= MAX_RECORDS_IN_MEMORY) { // Se o buffer atingir o limite máximo de registros na memória.
+                // Cria um arquivo temporário e escreve os dados no arquivo.
+                runFiles.add(writeRun(buffer, runCount++));
+                buffer.clear(); // Limpa o buffer para a próxima corrida.
             }
         }
 
-        RandomAccessFile sortedFile = new RandomAccessFile(finalFile, "rw");
-
-        while (!heap.isEmpty()) {
-            HeapHelper element = heap.poll();
-            byte[] bytes = element.movie.toByteArray();
-            sortedFile.writeByte(' '); // Lápide
-            sortedFile.writeShort(bytes.length);
-            sortedFile.write(bytes);
-
-            if (tempFiles[element.origin].getFilePointer() < tempFiles[element.origin].length()) {
-                Movie nextMovie = readNextMovie(tempFiles[element.origin]);
-                if (nextMovie != null) {
-                    heap.add(new HeapHelper(nextMovie, element.origin));
-                }
-            }
+        // Se o buffer não estiver vazio, escreve o restante dos filmes.
+        if (!buffer.isEmpty()) {
+            runFiles.add(writeRun(buffer, runCount));
         }
 
-        // Fecha e remove os arquivos temporários após a fusão
-        for (int i = 0; i < numBlocks; i++) {
-            if (tempFiles[i] != null) {
-                tempFiles[i].close();
-                new File("temp/run_" + i + ".db").delete();
-            }
-        }
-
-        sortedFile.close();
+        return runFiles; // Retorna a lista de arquivos temporários criados.
     }
 
-    // Lê o próximo filme de um arquivo temporário
-    private static Movie readNextMovie(RandomAccessFile file) throws Exception {
-        while (file.getFilePointer() < file.length()) {
-            long pos = file.getFilePointer();
-            byte lapide = file.readByte();
-            short size = file.readShort();
-            if (lapide != ' ') {
-                file.seek(pos + 3 + size);
-                continue;
-            }
+    // Método que escreve um arquivo temporário ordenado.
+    private String writeRun(List<Movie> buffer, int runIndex) throws IOException {
+        // Ordena os filmes no buffer pelo ID.
+        buffer.sort(Comparator.comparing(Movie::getId));
+        String fileName = "src/database/data/run_" + runIndex + ".db"; // Define o nome do arquivo temporário.
 
-            byte[] bytes = new byte[size];
-            file.readFully(bytes);
-            Movie movie = new Movie();
-            movie.fromByteArray(bytes);
-            return movie;
+        // Escreve os filmes no arquivo temporário utilizando ObjectOutputStream.
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            for (Movie movie : buffer) {
+                oos.writeObject(movie); // Grava cada filme no arquivo.
+            }
         }
-        return null;
+        return fileName; // Retorna o nome do arquivo temporário criado.
+    }
+
+    // Método que mescla os arquivos temporários ordenados.
+    private void mergeRuns(List<String> runFiles) throws Exception {
+        // PriorityQueue garante que os filmes serão retirados na ordem correta durante a fusão (por ID).
+        PriorityQueue<MovieEntry> pq = new PriorityQueue<>(Comparator.comparing(MovieEntry::getMovieId));
+        Map<ObjectInputStream, String> streams = new HashMap<>(); // Mapeia os streams de entrada para os nomes dos arquivos.
+
+        // Abre todos os arquivos temporários para leitura.
+        for (String runFile : runFiles) {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(runFile));
+            streams.put(ois, runFile); // Armazena o stream de entrada e o nome do arquivo.
+            addToQueue(ois, pq); // Adiciona o primeiro filme de cada arquivo à fila de prioridade.
+        }
+
+        // Limpa o arquivo original (no caso, o arquivo de filmes) antes de reescrever.
+        fileManager.clear();
+
+        // Enquanto a fila de prioridade não estiver vazia, continue retirando filmes ordenados e escrevendo no arquivo final.
+        while (!pq.isEmpty()) {
+            MovieEntry entry = pq.poll(); // Remove o filme de menor ID da fila de prioridade.
+            Movie movie = entry.movie; // Obtém o filme.
+
+            // Grava o filme no arquivo final (preservando o ID original).
+            fileManager.createAfterOrder(movie);
+
+            // Adiciona o próximo filme da mesma entrada de arquivo, caso haja mais filmes.
+            addToQueue(entry.stream, pq);
+        }
+
+        // Fecha todos os streams de leitura e exclui os arquivos temporários criados.
+        for (ObjectInputStream ois : streams.keySet()) {
+            ois.close();
+            new File(streams.get(ois)).delete(); // Remove arquivos temporários.
+        }
+    }
+
+    // Adiciona um filme da stream à fila de prioridade.
+    private void addToQueue(ObjectInputStream ois, PriorityQueue<MovieEntry> pq) throws IOException {
+        try {
+            Movie movie = (Movie) ois.readObject(); // Lê um filme do arquivo.
+            pq.offer(new MovieEntry(movie, ois)); // Adiciona o filme à fila de prioridade.
+        } catch (EOFException | ClassNotFoundException ignored) {
+            // Ignora exceções caso o fim do arquivo seja alcançado ou a classe não seja encontrada.
+        }
+    }
+
+    // Classe auxiliar que contém um filme e o stream de onde ele foi lido.
+    private static class MovieEntry {
+        Movie movie;  // O filme
+        ObjectInputStream stream; // O stream de onde o filme foi lido.
+
+        MovieEntry(Movie movie, ObjectInputStream stream) {
+            this.movie = movie;
+            this.stream = stream;
+        }
+
+        // Obtém o ID do filme, usado para ordenar os filmes na fila de prioridade.
+        int getMovieId() {
+            return movie.getId();
+        }
     }
 }

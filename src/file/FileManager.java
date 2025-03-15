@@ -4,6 +4,8 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
+import java.io.IOException;
+
 import model.*;
 
 public class FileManager<T extends Movie> {
@@ -62,10 +64,26 @@ public class FileManager<T extends Movie> {
 
     public int create(T obj) throws Exception {
         arquivo.seek(0);
-        int proximoID = arquivo.readInt() + 1;
+        int proximoID = arquivo.readInt() + 1; // O ID é incrementado, mas você deve mantê-lo original
         arquivo.seek(0);
         arquivo.writeInt(proximoID);
-        obj.setId(proximoID);
+        obj.setId(proximoID); // Garantir que o ID não será alterado (se necessário)
+    
+        byte[] b = obj.toByteArray();
+    
+        arquivo.seek(arquivo.length());
+        arquivo.writeByte(' ');      // Lápide
+        arquivo.writeShort(b.length);  // Tamanho do vetor de bytes
+        arquivo.write(b);              // Vetor de bytes
+    
+        return obj.getId();  // Retorna o ID original do objeto
+    }
+
+    public int createAfterOrder(T obj) throws Exception {
+        arquivo.seek(0);
+        int id = obj.getId();
+        arquivo.seek(0);
+        arquivo.writeInt(id);
         byte[] b = obj.toByteArray();
 
         arquivo.seek(arquivo.length());
@@ -73,7 +91,7 @@ public class FileManager<T extends Movie> {
         arquivo.writeShort(b.length);  // Tamanho do vetor de bytes
         arquivo.write(b);              // Vetor de bytes
 
-        return obj.getId();
+        return obj.getId();  // Retorna o ID original do objeto
     }
 
     public T read(int id) throws Exception {
@@ -169,6 +187,13 @@ public class FileManager<T extends Movie> {
             }
         }
         return updated;
+    }
+
+    public void clear() throws IOException {
+        arquivo.setLength(0);
+        arquivo.seek(0);
+        arquivo.writeInt(0);  // Reseta ID
+        arquivo.writeLong(-1); // Reseta os deletados
     }
 
     public int getNextId() throws Exception {

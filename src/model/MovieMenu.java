@@ -359,31 +359,18 @@ public class MovieMenu {
 }
 
     public void orderAllMovies() {
+        System.out.println("\nOrdering all movies...");
+
         try {
-            System.out.println("\nSorting movies by ID...");
-    
-            String originalFile = "src/database/data/movies.db";
-            String sortedFile = "src/database/data/movies_sorted.db";
-            int blockSize = 1000;
-    
-            ExternalSort.splitFileIntoBlocks(originalFile, blockSize);
-    
-            int numBlocks = (int) Math.ceil((double) new File(originalFile).length() / blockSize);
-            ExternalSort.mergeSortedBlocks(numBlocks, sortedFile);
-    
-            File oldFile = new File(originalFile);
-            File newFile = new File(sortedFile);
-    
-            if (oldFile.delete() && newFile.renameTo(oldFile)) {
-                System.out.println("Movies successfully sorted by ID.");
-            } else {
-                System.out.println("Error renaming sorted file.");
-            }
+            ExternalSort sorter = new ExternalSort(movieFile); // Criar instância
+            sorter.sort(); // Chamar o método da instância
+            System.out.println("Movies successfully ordered!");
         } catch (Exception e) {
-            System.err.println("System error. Unable to sort movies!");
+            System.out.println("System error. Unable to order movies!");
             e.printStackTrace();
         }
     }
+
 
     public void showMovie(Movie movie) {
         if (movie != null) {

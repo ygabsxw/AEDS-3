@@ -13,7 +13,6 @@ public static void main(String[] args) {
         console = new Scanner(System.in);
         int opcao;
         do {
-
             System.out.println("\n\nAEDsIII");
             System.out.println("-------");
             System.out.println("> Início");
