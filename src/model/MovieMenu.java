@@ -9,18 +9,17 @@ import database.algorithms.externalOrdering.ExternalSort;
 import file.*;
 
 public class MovieMenu {
-    FileManager<Movie> movieFile;
+    FileManagerHash<Movie> movieFile;
     private static Scanner sc = new Scanner(System.in);
 
     public MovieMenu() throws Exception {
-        movieFile = new FileManager<>("movies", Movie.class.getConstructor());
+        movieFile = new FileManagerHash<>("movies", Movie.class.getConstructor());
     }
 
     public void menu() {
 
         int option;
         do {
-
             System.out.println("\n\nAEDsIII");
             System.out.println(" 1 - Find");
             System.out.println(" 2 - Include");

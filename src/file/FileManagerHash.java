@@ -1,5 +1,6 @@
 package file;
 
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -14,19 +15,26 @@ public class FileManagerHash<T extends Movie> {  // Renomeado para FileManager
     HashExtensivel<ParIDEndereco> indiceDireto;
 
     public FileManagerHash(String na, Constructor<T> c) throws Exception {  // Alterado para FileManager
-        java.io.File d = new java.io.File(".\\dados");  // Usando java.io.File corretamente
+        
+        java.io.File d = new java.io.File("src/database/data/");  // Usando java.io.File corretamente
         if(!d.exists())
             d.mkdir();
 
-        d = new java.io.File(".\\dados\\"+na); 
+        d = new java.io.File("src/database/data/"+na); 
         if(!d.exists())
             d.mkdir();
 
-        this.nomeArquivo = na+".db"; //movies.db guarda os dados dos filmes
+        this.nomeArquivo = "src/database/data/" + na + ".db"; //movies.db guarda os dados dos filmes
         this.construtor = c;
 
         // Inicializar o índice direto antes de abrir o arquivo
-        indiceDireto = new HashExtensivel<>(ParIDEndereco.class.getConstructor(), 4, na+".d.db", na+".c.db");
+        indiceDireto = new HashExtensivel<>(
+            ParIDEndereco.class.getConstructor(),
+            4,
+            "src/database/data/" + na + ".d.db",
+            "src/database/data/" + na + ".c.db"
+        );
+        System.out.println("IndiceDireto: " + indiceDireto);
         // movies.d.db permite acesso rapido aos registros por meio da hash
         // movies.c.db gerencia a estrutura da hash
 
