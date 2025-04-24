@@ -16,7 +16,10 @@ public static void main(String[] args) {
             System.out.println("\n\nAEDsIII");
             System.out.println("-------");
             System.out.println("> Início");
-            System.out.println("\n1 - Filmes");
+            System.out.println("\n1 - Arquivo Sequencial");
+            System.out.println("2 - Arquivo Indexado - Hash");
+            System.out.println("3 - Arquivo Indexado - Arvore B");
+            System.out.println("4 - Arquivo Indexado - Lista Invertida");
             System.out.println("0 - Sair");
 
             System.out.print("\nOpção: ");
@@ -26,20 +29,26 @@ public static void main(String[] args) {
                 opcao = -1;
             }
 
-            switch (opcao) {
+            String fileType = "";
+            switch(opcao) {
                 case 1:
-                    try{
-                        (new MovieMenu()).menu();
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
+                    fileType = "sequential";
                     break;
-                case 0:
+                case 2:
+                    fileType = "hash";
+                    break;
+                case 3:
+                    fileType = "btree";
+                    break;
+                case 4:
+                    fileType = "inverted";
                     break;
                 default:
-                    System.out.println("Opção inválida!");
-                    break;
+                    System.out.println("Invalid option!");
+                    return;
             }
+            MovieMenu menu = new MovieMenu(fileType);
+            menu.menu();
 
         } while (opcao != 0);
 

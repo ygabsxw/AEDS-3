@@ -1,13 +1,15 @@
 package file;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.List;
 
 import model.*;
 
-public class FileManagerHash<T extends Movie> {  // Renomeado para FileManager
+public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Renomeado para FileManager
     final int TAM_CABECALHO = 12;
     RandomAccessFile arquivo;
     String nomeArquivo;
@@ -138,6 +140,23 @@ public class FileManagerHash<T extends Movie> {  // Renomeado para FileManager
             }
         }
         return null;
+    }
+
+    public List<T> readAll() throws Exception {
+        List<T> allRecords = new ArrayList<>();
+        arquivo.seek(TAM_CABECALHO); // Start reading after the header
+        while (arquivo.getFilePointer() < arquivo.length()) {
+            byte lapide = arquivo.readByte();
+            short tam = arquivo.readShort();
+            byte[] b = new byte[tam];
+            arquivo.read(b);
+            if (lapide == ' ') {
+                T obj = construtor.newInstance();
+                obj.fromByteArray(b);
+                allRecords.add(obj);
+            }
+        }
+        return allRecords;
     }
 
     public boolean delete(int id) throws Exception {
@@ -291,6 +310,17 @@ public class FileManagerHash<T extends Movie> {  // Renomeado para FileManager
             endereco = proximo;
         }
         return endereco;
+    }
+
+    int createAfterOrder(T obj) {
+        return 0;
+    }
+
+    public void clear() throws IOException {
+        // arquivo.setLength(0);
+        // arquivo.seek(0);
+        // arquivo.writeInt(0);  // Reseta ID
+        // arquivo.writeLong(-1); // Reseta os deletados
     }
 
     public int getNextId() throws Exception {

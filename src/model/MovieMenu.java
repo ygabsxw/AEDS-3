@@ -9,11 +9,26 @@ import database.algorithms.externalOrdering.ExternalSort;
 import file.*;
 
 public class MovieMenu {
-    FileManagerHash<Movie> movieFile;
+    FileManager<Movie> movieFile;
     private static Scanner sc = new Scanner(System.in);
 
-    public MovieMenu() throws Exception {
-        movieFile = new FileManagerHash<>("movies", Movie.class.getConstructor());
+    public MovieMenu(String fileType) throws Exception {
+        switch(fileType.toLowerCase()) {
+            case "sequential":
+                movieFile = new FileManagerSequencial<>("movies_seq", Movie.class.getConstructor());
+                break;
+            case "hash":
+                movieFile = new FileManagerHash<>("movies_hash", Movie.class.getConstructor());
+                break;
+            case "btree":
+                // movieFile = new FileManagerArvoreB<>("movies_btree", Movie.class.getConstructor());
+                break;
+            case "inverted":
+                // movieFile = new FileManagerListaInvertida<>("movies_inv", Movie.class.getConstructor());
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid file type");
+        }
     }
 
     public void menu() {
