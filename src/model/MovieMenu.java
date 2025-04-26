@@ -40,13 +40,12 @@ public class MovieMenu {
         do {
             System.out.println("\n\nAEDsIII");
             System.out.println(" 1 - Find By ID");
-            System.out.println(" 2 - Find By Release Year - For B Tree");
-            System.out.println(" 3 - Find By Type - For Inverted List");
-            System.out.println(" 4 - Include");
-            System.out.println(" 5 - Change");
-            System.out.println(" 6 - Delete");
-            System.out.println(" 7 - List All");
-            System.out.println(" 8 - Order All - For Sequential File");
+            System.out.println(" 2 - Find By Type - For Inverted List");
+            System.out.println(" 3 - Include");
+            System.out.println(" 4 - Change");
+            System.out.println(" 5 - Delete");
+            System.out.println(" 6 - List All");
+            System.out.println(" 7 - Order All - For Sequential File");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -61,24 +60,21 @@ public class MovieMenu {
                     findMovie();
                     break;
                 case 2:
-                    findByReleaseYear();
-                break;
-                case 3:
                     findByType();
                 break;
-                case 4:
+                case 3:
                     includeMovie();
                     break;
-                case 5:
+                case 4:
                     changeMovie();
                     break;
-                case 6:
+                case 5:
                     deleteMovie();
                     break;
-                case 7:
+                case 6:
                     listAllMovies();
                     break;
-                case 8:
+                case 7:
                     orderAllMovies();
                     break;
                 case 0:
@@ -112,30 +108,6 @@ public class MovieMenu {
             System.out.println("Invalid ID.");
         }
     }   
-
-    public void findByReleaseYear() {
-        System.out.print("\nRelease year: ");
-        int year = sc.nextInt();
-        sc.nextLine(); // Limpar o buffer após o nextInt()
-    
-        if (year > 0) {
-            try {
-                List<Movie> movies = ((FileManagerArvoreB<Movie>) movieFile).searchByReleaseYear(year);
-                if (movies != null && !movies.isEmpty()) {
-                    for (Movie movie : movies) {
-                        showMovie(movie);
-                    }
-                } else {
-                    System.out.println("No movies found for the given year.");
-                }
-            } catch (Exception e) {
-                System.out.println("System error. Unable to search for the movie!");
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("Invalid year.");
-        }
-    }
 
     public void findByType() {
         System.out.print("\nMovie type (e.g., Movie or TV Show): ");

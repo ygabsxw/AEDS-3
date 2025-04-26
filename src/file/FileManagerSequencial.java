@@ -205,10 +205,6 @@ public class FileManagerSequencial<T extends Movie> implements FileManager<T> {
         arquivo.close();
     }
 
-    public List<T> searchByReleaseYear(int year) throws Exception {
-        return null; //this is for the btree
-    }
-
     public List<T> searchByType(String type) throws Exception {
         return null; //this is for the inverted list
     }

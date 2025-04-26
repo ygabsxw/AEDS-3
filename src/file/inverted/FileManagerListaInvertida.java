@@ -232,10 +232,6 @@ public class FileManagerListaInvertida<T extends Movie> implements FileManager<T
         dados.close();
     }
 
-    public List<T> searchByReleaseYear(int year) throws Exception {
-        return null; //this is for the btree
-    }
-
     public List<T> searchByType(String type) throws Exception {
         List<T> encontrados = new ArrayList<>();
         ElementoLista[] elementos = indiceSecundario.read(type.trim().toLowerCase());

@@ -1,12 +1,7 @@
 package file.btree;
 
 import java.io.RandomAccessFile;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +14,7 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
 
     private RandomAccessFile dados;
     private Constructor<T> construtor;
-    private ArvoreBMais<ParIntInt> indiceSecundario;
+    private ArvoreBMais<ParIntInt> indicePrimario;
     private String nomeArquivo;
 
     public FileManagerArvoreB(String nomeBase, Constructor<T> c) throws Exception {
@@ -28,17 +23,16 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
         // Definir caminhos
         String baseDir = "src/database/data/btree/";
         this.nomeArquivo = baseDir + nomeBase + ".db";
-        String indiceSecundarioPath = baseDir + nomeBase + ".b.db";
+        String indicePrimarioPath = baseDir + nomeBase + ".b.db";
         
-        // Criar diretórios se não existirem
         File dir = new File(baseDir);
         if (!dir.exists()) {
-            dir.mkdirs(); // mkdirs() cria todos os diretórios necessários na hierarquia
+            dir.mkdirs();
         }
         
         // Inicializar arquivos
         dados = new RandomAccessFile(this.nomeArquivo, "rw");
-        indiceSecundario = new ArvoreBMais<>(ParIntInt.class.getConstructor(), 4, indiceSecundarioPath);
+        indicePrimario = new ArvoreBMais<>(ParIntInt.class.getConstructor(), 4, indicePrimarioPath);
 
         if (dados.length() < 12) {
             dados.writeInt(0);   // último ID
@@ -94,27 +88,28 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
         dados.writeShort(ba.length);
         dados.write(ba);
 
-        if (obj.getReleaseYear() != null) {
-            ParIntInt par = new ParIntInt(obj.getReleaseYear(), obj.getId());
-            System.out.println("Inserindo no índice: " + par);
-            indiceSecundario.create(par);
-        }
+        // Agora insere no índice primário: (id -> posição no arquivo)
+        ParIntInt par = new ParIntInt(id, (int) pos);
+        System.out.println("Inserindo no índice: " + par);
+        indicePrimario.create(par);
         
         return obj.getId();
     }
 
     public T read(int id) throws Exception {
-        dados.seek(12);
-        while (dados.getFilePointer() < dados.length()) {
-            long pos = dados.getFilePointer();
+        // Agora usa o índice para buscar!
+        List<ParIntInt> resultados = indicePrimario.read(new ParIntInt(id, -1));
+        if (resultados.size() > 0) {
+            int posicao = resultados.get(0).getNum2();
+            dados.seek(posicao);
             byte lapide = dados.readByte();
             short tam = dados.readShort();
             byte[] ba = new byte[tam];
-            dados.read(ba);
+            dados.readFully(ba);
             if (lapide == ' ') {
                 T obj = construtor.newInstance();
                 obj.fromByteArray(ba);
-                if (obj.getId() == id) return obj;
+                return obj;
             }
         }
         return null;
@@ -127,7 +122,7 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
             byte lapide = dados.readByte();
             short tam = dados.readShort();
             byte[] ba = new byte[tam];
-            dados.read(ba);
+            dados.readFully(ba);
             if (lapide == ' ') {
                 T obj = construtor.newInstance();
                 obj.fromByteArray(ba);
@@ -138,75 +133,60 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
     }
 
     public boolean update(T novo) throws Exception {
-        // Localizar e excluir o registro antigo
-        dados.seek(12);
-        while (dados.getFilePointer() < dados.length()) {
-            long pos = dados.getFilePointer();
+        // Localiza a posição pelo índice
+        List<ParIntInt> resultados = indicePrimario.read(new ParIntInt(novo.getId(), -1));
+        if (resultados.size() > 0) {
+            int posicao = resultados.get(0).getNum2();
+            dados.seek(posicao);
             byte lapide = dados.readByte();
             short tam = dados.readShort();
-            byte[] ba = new byte[tam];
-            dados.read(ba);
     
+            byte[] novoBa = novo.toByteArray();
+            
             if (lapide == ' ') {
-                T obj = construtor.newInstance();
-                obj.fromByteArray(ba);
-                if (obj.getId() == novo.getId()) {
-                    // Marca como excluído
-                    dados.seek(pos);
+                if (novoBa.length <= tam) {
+                    // Cabe no espaço original: sobrescreve
+                    dados.write(novoBa);
+                } else {
+                    // Não cabe: marca como excluído e grava no final
+                    dados.seek(posicao);
                     dados.writeByte('*');
-                    
-                    // Não precisa remover do índice, pois o ID será regravado igual
-                    break;
+    
+                    dados.seek(dados.length());
+                    int novaPosicao = (int) dados.getFilePointer();
+                    dados.writeByte(' ');
+                    dados.writeShort(novoBa.length);
+                    dados.write(novoBa);
+    
+                    // Atualiza o índice para a nova posição
+                    indicePrimario.update(new ParIntInt(novo.getId(), novaPosicao));
                 }
-            }
-        }
-    
-        // Agora grava o novo registro (com mesmo ID!)
-        dados.seek(dados.length());
-        long novaPosicao = dados.getFilePointer();
-        dados.writeByte(' ');
-        byte[] novoBa = novo.toByteArray();
-        dados.writeShort(novoBa.length);
-        dados.write(novoBa);
-    
-        // Atualiza índice secundário, se necessário (aqui depende se você indexa por campo alterado)
-        // Exemplo: atualiza ano de lançamento se mudar
-        indiceSecundario.create(new ParIntInt(novo.getReleaseYear(), novo.getId()));
-    
-        return true;
-    }
-
-    public boolean delete(int id) throws Exception {
-        dados.seek(12);
-        while (dados.getFilePointer() < dados.length()) {
-            long pos = dados.getFilePointer();
-            byte lapide = dados.readByte();
-            short tam = dados.readShort();
-            byte[] ba = new byte[tam];
-            dados.read(ba);
-            if (lapide == ' ') {
-                T obj = construtor.newInstance();
-                obj.fromByteArray(ba);
-                if (obj.getId() == id) {
-                    dados.seek(pos);
-                    dados.writeByte('*');
-                    return true;
-                }
+                return true;
             }
         }
         return false;
     }
 
-    int createAfterOrder(T obj) throws IOException {
+    public boolean delete(int id) throws Exception {
+        // Localiza a posição pelo índice
+        List<ParIntInt> resultados = indicePrimario.read(new ParIntInt(id, -1));
+        if (resultados.size() > 0) {
+            int posicao = resultados.get(0).getNum2();
+            dados.seek(posicao);
+            dados.writeByte('*'); // marca como excluído
+
+            // Remove do índice primário
+            indicePrimario.delete(new ParIntInt(id, -1));
+            return true;
+        }
+        return false;
+    }
+
+    int createAfterOrder(T obj) throws Exception {
         return 0;
     }
 
-    public void clear() throws Exception {
-        // dados.setLength(0);
-        // dados.writeInt(0);   // Reset last ID
-        // dados.writeLong(-1); // Reset deleted list
-        // indiceSecundario.clear(); // Clear secondary index
-    }
+    public void clear() throws Exception { }
 
     public void close() throws Exception {
         dados.close();
@@ -217,19 +197,7 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
         return dados.readInt() + 1;
     }
 
-    public List<T> searchByReleaseYear(int year) throws Exception {
-        List<ParIntInt> pares = indiceSecundario.read(new ParIntInt(year, -1));
-        List<T> encontrados = new ArrayList<>();
-        for (ParIntInt p : pares) {
-            T m = read(p.getNum2());
-            if (m != null) {
-                encontrados.add(m);
-            }
-        }
-        return encontrados;
-    }
-
     public List<T> searchByType(String type) throws Exception {
-        return null; //this is for the inverted list
+        return null; // lista invertida
     }
 }

@@ -12,6 +12,5 @@ public interface FileManager<T> {
     int getNextId() throws Exception;
     void clear() throws Exception;
     void close() throws Exception;
-    List<T> searchByReleaseYear(int year) throws Exception; //for btree
     List<T> searchByType(String type) throws Exception; //for inverted list
 }

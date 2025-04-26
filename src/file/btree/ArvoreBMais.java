@@ -843,4 +843,10 @@ public class ArvoreBMais<T extends RegistroArvoreBMais<T>> {
         }
     }
 
+    public boolean update(T novo) throws Exception {
+        // Remove o registro antigo com mesmo ID
+        delete(novo);
+        // Insere o novo com a nova posição
+        return create(novo);
+    }
 }
