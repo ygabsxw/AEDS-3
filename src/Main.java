@@ -16,10 +16,10 @@ public static void main(String[] args) {
             System.out.println("\n\nAEDsIII");
             System.out.println("-------");
             System.out.println("> Início");
-            System.out.println("\n1 - Arquivo Sequencial");
-            System.out.println("2 - Arquivo Indexado - Hash");
-            System.out.println("3 - Arquivo Indexado - Arvore B");
-            System.out.println("4 - Arquivo Indexado - Lista Invertida");
+            System.out.println("\n1 - Sequential File");
+            System.out.println("2 - Indexed File - Hash");
+            System.out.println("3 - Indexed File - B Tree");
+            System.out.println("4 - Indexed File - Inverted List");
             System.out.println("0 - Sair");
 
             System.out.print("\nOpção: ");

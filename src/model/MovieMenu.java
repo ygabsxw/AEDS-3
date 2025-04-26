@@ -7,6 +7,8 @@ import java.util.Scanner;
 
 import database.algorithms.externalOrdering.ExternalSort;
 import file.*;
+import file.hash.FileManagerHash;
+import file.btree.FileManagerArvoreB;
 
 public class MovieMenu {
     FileManager<Movie> movieFile;
@@ -21,7 +23,7 @@ public class MovieMenu {
                 movieFile = new FileManagerHash<>("movies_hash", Movie.class.getConstructor());
                 break;
             case "btree":
-                // movieFile = new FileManagerArvoreB<>("movies_btree", Movie.class.getConstructor());
+                movieFile = new FileManagerArvoreB<>("movies_btree", Movie.class.getConstructor());
                 break;
             case "inverted":
                 // movieFile = new FileManagerListaInvertida<>("movies_inv", Movie.class.getConstructor());

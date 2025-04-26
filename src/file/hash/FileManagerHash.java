@@ -1,4 +1,4 @@
-package file;
+package file.hash;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,6 +7,9 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import file.FileManager;
+import file.ParIDEndereco;
+import file.readCSV;
 import model.*;
 
 public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Renomeado para FileManager
@@ -312,7 +315,7 @@ public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Re
         return endereco;
     }
 
-    int createAfterOrder(T obj) {
+    int createAfterOrder(T obj) throws IOException {
         return 0;
     }
 
