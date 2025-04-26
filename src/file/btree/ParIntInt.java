@@ -22,11 +22,19 @@ public class ParIntInt implements RegistroArvoreBMais<ParIntInt> {
 
   public ParIntInt(int n1, int n2) {
     try {
-      this.num1 = n1; // ID do Usuário
-      this.num2 = n2; // ID da Pergunta
+      this.num1 = n1; // ID do ano
+      this.num2 = n2; // ID da filme
     } catch (Exception ec) {
       ec.printStackTrace();
     }
+  }    
+  
+  public int getNum1() {
+      return num1;
+  }
+
+  public int getNum2() {
+      return num2;
   }
 
   @Override
@@ -38,13 +46,16 @@ public class ParIntInt implements RegistroArvoreBMais<ParIntInt> {
     return this.TAMANHO;
   }
 
+  @Override
   public int compareTo(ParIntInt a) {
     if (this.num1 != a.num1)
       return this.num1 - a.num1;
     else
       // Só compara os valores de Num2, se o Num2 da busca for diferente de -1
       // Isso é necessário para que seja possível a busca de lista
-      return this.num2 == -1 ? 0 : this.num2 - a.num2;
+      return 0;
+      // System.out.println("Num2: " + this.num2 + " - " + a.num2);
+      // return this.num2 == -1 ? 0 : this.num2 - a.num2;
   }
 
   public String toString() {

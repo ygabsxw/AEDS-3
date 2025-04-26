@@ -9,6 +9,7 @@ import database.algorithms.externalOrdering.ExternalSort;
 import file.*;
 import file.hash.FileManagerHash;
 import file.btree.FileManagerArvoreB;
+import file.inverted.FileManagerListaInvertida;
 
 public class MovieMenu {
     FileManager<Movie> movieFile;
@@ -26,7 +27,7 @@ public class MovieMenu {
                 movieFile = new FileManagerArvoreB<>("movies_btree", Movie.class.getConstructor());
                 break;
             case "inverted":
-                // movieFile = new FileManagerListaInvertida<>("movies_inv", Movie.class.getConstructor());
+                movieFile = new FileManagerListaInvertida<>("movies_inv", Movie.class.getConstructor());
                 break;
             default:
                 throw new IllegalArgumentException("Invalid file type");
@@ -38,12 +39,14 @@ public class MovieMenu {
         int option;
         do {
             System.out.println("\n\nAEDsIII");
-            System.out.println(" 1 - Find");
-            System.out.println(" 2 - Include");
-            System.out.println(" 3 - Change");
-            System.out.println(" 4 - Delete");
-            System.out.println(" 5 - List All");
-            System.out.println(" 6 - Order All");
+            System.out.println(" 1 - Find By ID");
+            System.out.println(" 2 - Find By Release Year - For B Tree");
+            System.out.println(" 3 - Find By Type - For Inverted List");
+            System.out.println(" 4 - Include");
+            System.out.println(" 5 - Change");
+            System.out.println(" 6 - Delete");
+            System.out.println(" 7 - List All");
+            System.out.println(" 8 - Order All - For Sequential File");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -58,18 +61,24 @@ public class MovieMenu {
                     findMovie();
                     break;
                 case 2:
+                    findByReleaseYear();
+                break;
+                case 3:
+                    findByType();
+                break;
+                case 4:
                     includeMovie();
                     break;
-                case 3:
+                case 5:
                     changeMovie();
                     break;
-                case 4:
+                case 6:
                     deleteMovie();
                     break;
-                case 5:
+                case 7:
                     listAllMovies();
                     break;
-                case 6:
+                case 8:
                     orderAllMovies();
                     break;
                 case 0:
@@ -103,6 +112,53 @@ public class MovieMenu {
             System.out.println("Invalid ID.");
         }
     }   
+
+    public void findByReleaseYear() {
+        System.out.print("\nRelease year: ");
+        int year = sc.nextInt();
+        sc.nextLine(); // Limpar o buffer após o nextInt()
+    
+        if (year > 0) {
+            try {
+                List<Movie> movies = ((FileManagerArvoreB<Movie>) movieFile).searchByReleaseYear(year);
+                if (movies != null && !movies.isEmpty()) {
+                    for (Movie movie : movies) {
+                        showMovie(movie);
+                    }
+                } else {
+                    System.out.println("No movies found for the given year.");
+                }
+            } catch (Exception e) {
+                System.out.println("System error. Unable to search for the movie!");
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Invalid year.");
+        }
+    }
+
+    public void findByType() {
+        System.out.print("\nMovie type (e.g., Movie or TV Show): ");
+        String type = sc.nextLine();
+    
+        if (!type.isEmpty()) {
+            try {
+                List<Movie> movies = ((FileManagerListaInvertida<Movie>) movieFile).searchByType(type);
+                if (movies != null && !movies.isEmpty()) {
+                    for (Movie movie : movies) {
+                        showMovie(movie);
+                    }
+                } else {
+                    System.out.println("No movies found for the given type.");
+                }
+            } catch (Exception e) {
+                System.out.println("System error. Unable to search for the movie!");
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Invalid type.");
+        }
+    }
 
 
     public void includeMovie() {

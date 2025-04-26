@@ -16,10 +16,10 @@ public class FileManagerSequencial<T extends Movie> implements FileManager<T> {
 
     public FileManagerSequencial(String na, Constructor<T> c) throws Exception {
         // Define o caminho correto do diretório
-        File diretorio = new File("src/database/data/");
+        File diretorio = new File("src/database/data/sequential/");
         if (!diretorio.exists()) diretorio.mkdirs(); // Cria a pasta caso não exista
 
-        this.nomeArquivo = "src/database/data/" + na + ".db"; // Caminho correto
+        this.nomeArquivo = "src/database/data/sequential/" + na + ".db"; // Caminho correto
 
         // Criando o arquivo caso não exista
         File file = new File(this.nomeArquivo);
@@ -203,5 +203,13 @@ public class FileManagerSequencial<T extends Movie> implements FileManager<T> {
 
     public void close() throws Exception {
         arquivo.close();
+    }
+
+    public List<T> searchByReleaseYear(int year) throws Exception {
+        return null; //this is for the btree
+    }
+
+    public List<T> searchByType(String type) throws Exception {
+        return null; //this is for the inverted list
     }
 }

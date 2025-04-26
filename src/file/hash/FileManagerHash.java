@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import file.FileManager;
-import file.ParIDEndereco;
 import file.readCSV;
+import file.inverted.ElementoLista;
 import model.*;
 
 public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Renomeado para FileManager
@@ -21,23 +21,23 @@ public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Re
 
     public FileManagerHash(String na, Constructor<T> c) throws Exception {  // Alterado para FileManager
         
-        java.io.File d = new java.io.File("src/database/data/");  // Usando java.io.File corretamente
+        java.io.File d = new java.io.File("src/database/data/hash/");  // Usando java.io.File corretamente
         if(!d.exists())
             d.mkdir();
 
-        d = new java.io.File("src/database/data/"+na); 
+        d = new java.io.File("src/database/data/hash/"+na); 
         if(!d.exists())
             d.mkdir();
 
-        this.nomeArquivo = "src/database/data/" + na + ".db"; //movies.db guarda os dados dos filmes
+        this.nomeArquivo = "src/database/data/hash/" + na + ".db"; //movies.db guarda os dados dos filmes
         this.construtor = c;
 
         // Inicializar o índice direto antes de abrir o arquivo
         indiceDireto = new HashExtensivel<>(
             ParIDEndereco.class.getConstructor(),
             4,
-            "src/database/data/" + na + ".d.db",
-            "src/database/data/" + na + ".c.db"
+            "src/database/data/hash/" + na + ".d.db",
+            "src/database/data/hash/" + na + ".c.db"
         );
         System.out.println("IndiceDireto: " + indiceDireto);
         // movies.d.db permite acesso rapido aos registros por meio da hash
@@ -335,4 +335,13 @@ public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Re
         arquivo.close();
         indiceDireto.close();
     }
+
+    public List<T> searchByReleaseYear(int year) throws Exception {
+        return null; //this is for the btree
+    }
+
+    public List<T> searchByType(String type) throws Exception {
+        return null; //this is for the inverted list
+    }
+    
 }
