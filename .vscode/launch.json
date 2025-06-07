@@ -6,6 +6,13 @@
       "name": "Main",
       "request": "launch",
       "mainClass": "Main",
+      "projectName": "AEDS-3_5b9ee996"
+    },
+    {
+      "type": "java",
+      "name": "Main",
+      "request": "launch",
+      "mainClass": "Main",
       "projectName": "AEDS-3_457650e1"
     },
     {

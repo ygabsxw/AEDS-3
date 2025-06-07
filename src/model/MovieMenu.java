@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -13,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+import algorithms.searchPattern.BoyerMoore;
+import algorithms.searchPattern.KMP;
 import algorithms.compression.Huffman;
 import algorithms.compression.LZW;
 import algorithms.compression.VetorDeBits;
@@ -60,6 +63,7 @@ public class MovieMenu {
             System.out.println(" 7 - Order All - For Sequential File");
             System.out.println(" 8 - Compression");
             System.out.println(" 9 - Decompression");
+            System.out.println("10 - Pattern Matching");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -96,6 +100,9 @@ public class MovieMenu {
                     break;
                 case 9:
                     decompress();
+                    break;
+                case 10:
+                    searchPattern();
                     break;
                 case 0:
                     break;
@@ -588,6 +595,78 @@ public class MovieMenu {
             e.printStackTrace();
         }
     }
+
+    public void searchPattern() {
+    try {
+        Scanner sc = new Scanner(System.in);
+        String inputPath = movieFile.getFilePath();
+
+        System.out.println("\n--- PATTERN MATCH ---");
+        System.out.println(" 1 - Search with KMP");
+        System.out.println(" 2 - Search with Boyer-Moore");
+        System.out.println(" 0 - Back");
+        System.out.print("Choose the algorithm: ");
+        int option = Integer.parseInt(sc.nextLine());
+
+        System.out.print("Enter pattern to search: ");
+        String pattern = sc.nextLine();
+
+        byte[] fileBytes = Files.readAllBytes(Paths.get(inputPath));
+        String content = new String(fileBytes, StandardCharsets.ISO_8859_1);
+        
+        int index = -1;
+        long startTime, endTime;
+        double elapsedTime = 0;
+
+        switch (option) {
+            case 1:
+                try {
+                    startTime = System.nanoTime();
+                    KMP kmp = new KMP();
+                    index = kmp.search(content, pattern);
+                    endTime = System.nanoTime();
+                    elapsedTime = (endTime - startTime) / 1e6;
+
+                    System.out.println((index != -1) ?
+                        "Pattern found at position: " + index :
+                        "Pattern not found.");
+                    System.out.printf("KMP Time: %.2f ms%n", elapsedTime);
+                } catch (Exception e) {
+                    System.err.println("Error using KMP: " + e.getMessage());
+                }
+                break;
+
+            case 2:
+                try {
+                    startTime = System.nanoTime();
+                    BoyerMoore bm = new BoyerMoore(pattern);
+                    index = bm.search(content);
+                    endTime = System.nanoTime();
+                    elapsedTime = (endTime - startTime) / 1e6;
+
+                    System.out.println((index != -1) ?
+                        "Pattern found at position: " + index :
+                        "Pattern not found.");
+                    System.out.printf("Boyer-Moore Time: %.2f ms%n", elapsedTime);
+                } catch (Exception e) {
+                    System.err.println("Error using Boyer-Moore: " + e.getMessage());
+                }
+                break;
+
+            case 0:
+                return;
+
+            default:
+                System.out.println("Invalid option!");
+                return;
+        }
+
+    } catch (Exception e) {
+        System.err.println("Error in pattern search: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
 
     public void showMovie(Movie movie) {
         if (movie != null) {
