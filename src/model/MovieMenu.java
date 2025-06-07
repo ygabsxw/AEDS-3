@@ -1,15 +1,27 @@
 package model;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
-import database.algorithms.externalOrdering.ExternalSort;
+import algorithms.compression.Huffman;
+import algorithms.compression.LZW;
+import algorithms.compression.VetorDeBits;
+import algorithms.externalOrdering.ExternalSort;
 import file.*;
 import file.hash.FileManagerHash;
 import file.btree.FileManagerArvoreB;
 import file.inverted.FileManagerListaInvertida;
+
 
 public class MovieMenu {
     FileManager<Movie> movieFile;
@@ -46,6 +58,8 @@ public class MovieMenu {
             System.out.println(" 5 - Delete");
             System.out.println(" 6 - List All");
             System.out.println(" 7 - Order All - For Sequential File");
+            System.out.println(" 8 - Compression");
+            System.out.println(" 9 - Decompression");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -77,11 +91,17 @@ public class MovieMenu {
                 case 7:
                     orderAllMovies();
                     break;
+                case 8:
+                    compress();
+                    break;
+                case 9:
+                    decompress();
+                    break;
                 case 0:
                     break;
                 default:
                     System.out.println("Invalid option!");
-                    break;
+                    return;
             }
 
         } while (option != 0);
@@ -415,6 +435,159 @@ public class MovieMenu {
         }
     }
 
+    public void compress() {
+        try {
+            String inputPath = movieFile.getFilePath();  // Agora é dinâmico!
+            String outputDir = "src/database/data/compression/";
+            new File(outputDir).mkdirs(); // Garante que o diretório existe
+
+            String outputLZW = outputDir + "movies_compressed_lzw.db";
+            String outputHuff = outputDir + "movies_compressed_huffman.db";
+
+            // Leitura do arquivo original
+            File inputFile = new File(inputPath);
+            byte[] originalData = java.nio.file.Files.readAllBytes(inputFile.toPath());
+            int originalSize = originalData.length;
+
+            System.out.println("\n--- COMPACTAÇÃO ---");
+            System.out.println("Original file: " + inputPath);
+            System.out.println("Original size: " + originalSize + " bytes");
+
+            // Compressão LZW
+            long startLZW = System.nanoTime();
+            byte[] compressedLZW = LZW.codifica(originalData);
+            long endLZW = System.nanoTime();
+            long timeLZW = endLZW - startLZW;
+            java.nio.file.Files.write(java.nio.file.Paths.get(outputLZW), compressedLZW);
+            int sizeLZW = compressedLZW.length;
+
+            // Compressão Huffman
+            long startHuff = System.nanoTime();
+            HashMap<Byte, String> codigos = Huffman.codifica(originalData);
+            StringBuilder encoded = new StringBuilder();
+            for (byte b : originalData)
+                encoded.append(codigos.get(b));
+            VetorDeBits vb = new VetorDeBits();
+            for (int i = 0; i < encoded.length(); i++)
+                if (encoded.charAt(i) == '1') vb.set(i);
+            byte[] compressedHuff = vb.toByteArray();
+            long endHuff = System.nanoTime();
+            long timeHuff = endHuff - startHuff;
+
+            // Salva tamanho dos bits válidos, dicionário e dados comprimidos
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(outputHuff))) {
+                oos.writeInt(encoded.length());   // <--- Salva o tamanho total de bits válidos
+                oos.writeObject(codigos);
+                oos.writeObject(compressedHuff);
+            }
+            int sizeHuff = compressedHuff.length;
+
+            // Resultados
+            System.out.println("\n--- RESULTS ---");
+            double percLZW = ((double) (originalSize - sizeLZW) / originalSize) * 100;
+            double percHuff = ((double) (originalSize - sizeHuff) / originalSize) * 100;
+
+            System.out.printf("LZW: %d bytes | %.2f%% compression | %.2f ms%n", sizeLZW, percLZW, timeLZW / 1e6);
+            System.out.printf("Huffman: %d bytes | %.2f%% compression | %.2f ms%n", sizeHuff, percHuff, timeHuff / 1e6);
+
+            if (percLZW > percHuff)
+                System.out.println("LZW had better compression.");
+            else if (percHuff > percLZW)
+                System.out.println("Huffman had better compression.");
+            else
+                System.out.println("Both had equal compression.");
+
+            if (timeLZW < timeHuff)
+                System.out.println("LZW was faster");
+            else if (timeHuff < timeLZW)
+                System.out.println("Huffman was faster");
+            else
+                System.out.println("Both algorithms took the same amount of time.");
+
+        } catch (Exception e) {
+            System.err.println("Erro na compressão: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void decompress() {
+        try {
+            Scanner sc = new Scanner(System.in);
+            String inputPath = movieFile.getFilePath();
+            String compressedDir = "src/database/data/compression/";
+
+            System.out.println("\n--- DECOMPRESSION ---");
+            System.out.println(" 1 - Decompress with LZW");
+            System.out.println(" 2 - Decompress with Huffman");
+            System.out.println(" 0 - Back");
+            System.out.print("Choose the algorithm: ");
+            int option = Integer.parseInt(sc.nextLine());
+
+            byte[] decompressedData = null;
+            long startTime, endTime;
+            double timeLZW = -1, timeHuffman = -1;
+
+            switch (option) {
+                case 1:
+                    // LZW
+                    try {
+                        String compressedLZWPath = compressedDir + "movies_compressed_lzw.db";
+                        byte[] compressedLZW = Files.readAllBytes(Paths.get(compressedLZWPath));
+
+                        startTime = System.nanoTime();
+                        decompressedData = LZW.decodifica(compressedLZW);
+                        endTime = System.nanoTime();
+
+                        timeLZW = (endTime - startTime) / 1e6;
+                        Files.write(Paths.get(inputPath), decompressedData);
+
+                        System.out.printf("LZW decompressed successfully! Time: %.2f ms%n", timeLZW);
+                    } catch (Exception e) {
+                        System.err.println("Error decompressing with LZW: " + e.getMessage());
+                    }
+                    break;
+
+                case 2:
+                    // Huffman
+                    try {
+                    String compressedHuffPath = compressedDir + "movies_compressed_huffman.db";
+                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(compressedHuffPath));
+                    
+                    int totalBits = ois.readInt();  // lê o total de bits válidos
+                    @SuppressWarnings("unchecked")
+                    HashMap<Byte, String> codigos = (HashMap<Byte, String>) ois.readObject();
+                    byte[] compressedBytes = (byte[]) ois.readObject();
+                    ois.close();
+
+                    // Reconstrução da sequência codificada, mas limitando ao total de bits válidos
+                    StringBuilder sequenciaCodificada = VetorDeBits.fromByteArray(compressedBytes);
+                    String bitsValidos = sequenciaCodificada.substring(0, totalBits);
+
+                    startTime = System.nanoTime();
+                    decompressedData = Huffman.decodifica(bitsValidos, codigos);
+                    endTime = System.nanoTime();
+
+                    timeHuffman = (endTime - startTime) / 1e6;
+                    Files.write(Paths.get(inputPath), decompressedData);
+
+                    System.out.printf("Huffman decompressed successfully! Time: %.2f ms%n", timeHuffman);
+                } catch (Exception e) {
+                    System.err.println("Error decompressing with Huffman: " + e.getMessage());
+                }
+                    break;
+
+                case 0:
+                    break;
+                default:
+                    System.out.println("Invalid option!");
+                    return;
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error decompressing: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     public void showMovie(Movie movie) {
         if (movie != null) {

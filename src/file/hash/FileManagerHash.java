@@ -340,4 +340,7 @@ public class FileManagerHash<T extends Movie> implements FileManager<T> {  // Re
         return null; //this is for the inverted list
     }
     
+    public String getFilePath() {
+        return this.nomeArquivo;
+    }
 }

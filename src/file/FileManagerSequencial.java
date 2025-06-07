@@ -208,4 +208,9 @@ public class FileManagerSequencial<T extends Movie> implements FileManager<T> {
     public List<T> searchByType(String type) throws Exception {
         return null; //this is for the inverted list
     }
+
+    public String getFilePath() {
+        return this.nomeArquivo;
+    }
+
 }

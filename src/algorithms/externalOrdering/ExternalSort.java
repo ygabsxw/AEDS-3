@@ -1,4 +1,4 @@
-package database.algorithms.externalOrdering;
+package algorithms.externalOrdering;
 
 import file.FileManager;
 import model.Movie;

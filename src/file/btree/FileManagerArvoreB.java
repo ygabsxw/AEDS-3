@@ -200,4 +200,8 @@ public class FileManagerArvoreB<T extends Movie> implements FileManager<T> {
     public List<T> searchByType(String type) throws Exception {
         return null; // lista invertida
     }
+
+    public String getFilePath() {
+        return this.nomeArquivo;
+    }
 }

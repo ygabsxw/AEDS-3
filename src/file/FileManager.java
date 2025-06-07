@@ -13,4 +13,5 @@ public interface FileManager<T> {
     void clear() throws Exception;
     void close() throws Exception;
     List<T> searchByType(String type) throws Exception; //for inverted list
+    String getFilePath();
 }

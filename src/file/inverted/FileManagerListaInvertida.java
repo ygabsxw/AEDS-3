@@ -241,4 +241,8 @@ public class FileManagerListaInvertida<T extends Movie> implements FileManager<T
         }
         return encontrados;
     }
+
+    public String getFilePath() {
+        return this.nomeArquivo;
+    }
 }
