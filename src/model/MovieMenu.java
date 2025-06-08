@@ -63,7 +63,7 @@ public class MovieMenu {
             System.out.println(" 7 - Order All - For Sequential File");
             System.out.println(" 8 - Compression");
             System.out.println(" 9 - Decompression");
-            System.out.println("10 - Pattern Matching");
+            System.out.println(" 10 - Pattern Matching");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -557,30 +557,40 @@ public class MovieMenu {
                 case 2:
                     // Huffman
                     try {
-                    String compressedHuffPath = compressedDir + "movies_compressed_huffman.db";
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(compressedHuffPath));
-                    
-                    int totalBits = ois.readInt();  // lê o total de bits válidos
-                    @SuppressWarnings("unchecked")
-                    HashMap<Byte, String> codigos = (HashMap<Byte, String>) ois.readObject();
-                    byte[] compressedBytes = (byte[]) ois.readObject();
-                    ois.close();
+                        String compressedHuffPath = compressedDir + "movies_compressed_huffman.db";
+                        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(compressedHuffPath));
+                        int totalBits = ois.readInt();  // total de bits válidos
+                        @SuppressWarnings("unchecked")
+                        HashMap<Byte, String> codigos = (HashMap<Byte, String>) ois.readObject();
+                        byte[] compressedBytes = (byte[]) ois.readObject();
+                        ois.close();
 
-                    // Reconstrução da sequência codificada, mas limitando ao total de bits válidos
-                    StringBuilder sequenciaCodificada = VetorDeBits.fromByteArray(compressedBytes);
-                    String bitsValidos = sequenciaCodificada.substring(0, totalBits);
+                        // Constrói a sequência de bits e corta só os bits válidos
+                        StringBuilder sequenciaCodificada = VetorDeBits.fromByteArray(compressedBytes);
+                        String bitsValidos = sequenciaCodificada.substring(0, totalBits);
 
-                    startTime = System.nanoTime();
-                    decompressedData = Huffman.decodifica(bitsValidos, codigos);
-                    endTime = System.nanoTime();
+                        // Usa árvore reconstruída
+                        Huffman.HuffmanNode raiz = Huffman.reconstruirArvore(codigos);
+                        startTime = System.nanoTime();
+                        decompressedData = Huffman.decodifica(bitsValidos, raiz);
+                        endTime = System.nanoTime();
 
-                    timeHuffman = (endTime - startTime) / 1e6;
-                    Files.write(Paths.get(inputPath), decompressedData);
+                        timeHuffman = (endTime - startTime) / 1e6;
 
-                    System.out.printf("Huffman decompressed successfully! Time: %.2f ms%n", timeHuffman);
-                } catch (Exception e) {
-                    System.err.println("Error decompressing with Huffman: " + e.getMessage());
-                }
+                        // Depuração: imprime os primeiros bytes descomprimidos
+                        System.out.println("Bytes descomprimidos (primeiros 100):");
+                        for (int i = 0; i < Math.min(decompressedData.length, 100); i++) {
+                            System.out.print((char) decompressedData[i]);
+                        }
+                        System.out.println();
+
+                        Files.write(Paths.get(inputPath), decompressedData);
+
+                        System.out.printf("Huffman decompressed successfully! Time: %.2f ms%n", timeHuffman);
+                    } catch (Exception e) {
+                        System.err.println("Error decompressing with Huffman: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     break;
 
                 case 0:

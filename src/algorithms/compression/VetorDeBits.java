@@ -56,8 +56,8 @@ public class VetorDeBits {
         StringBuilder bits = new StringBuilder();
 
         for (int i = 0; i < bytes.length; i++) {
-            for (int j = 7; j >= 0; j--) {
-                bits.append((bytes[i] >> j) & 1);
+            for (int j = 0; j < 8; j++) {  // bit 0 até bit 7
+                bits.append(((bytes[i] >> j) & 1) == 1 ? '1' : '0');
             }
         }
 

@@ -13,9 +13,6 @@ package algorithms.compression;
  */
 import java.util.ArrayList;
 
-import file.FileManager;
-import model.Movie;
-
 public class LZW {
 
     public static final int BITS_POR_INDICE = 12; // Mínimo de 9 bits por índice (512 itens no dicionário)
