@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,6 +21,8 @@ import algorithms.searchPattern.KMP;
 import algorithms.compression.Huffman;
 import algorithms.compression.LZW;
 import algorithms.compression.VetorDeBits;
+import algorithms.encrypt.Cifra;
+import algorithms.encrypt.RSA;
 import algorithms.externalOrdering.ExternalSort;
 import file.*;
 import file.hash.FileManagerHash;
@@ -27,6 +31,7 @@ import file.inverted.FileManagerListaInvertida;
 
 
 public class MovieMenu {
+    private final RSA rsa = new RSA();
     FileManager<Movie> movieFile;
     private static Scanner sc = new Scanner(System.in);
 
@@ -64,6 +69,8 @@ public class MovieMenu {
             System.out.println(" 8 - Compression");
             System.out.println(" 9 - Decompression");
             System.out.println(" 10 - Pattern Matching");
+            System.out.println(" 11 - Encrypt Cifra");
+            System.out.println(" 12 - Encrypt RSA");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
@@ -103,6 +110,12 @@ public class MovieMenu {
                     break;
                 case 10:
                     searchPattern();
+                    break;
+                case 11:
+                    encryptAllMoviesCifra();
+                    break;
+                 case 12:
+                    encryptAllMoviesRSA();
                     break;
                 case 0:
                     break;
@@ -607,75 +620,149 @@ public class MovieMenu {
     }
 
     public void searchPattern() {
-    try {
-        Scanner sc = new Scanner(System.in);
-        String inputPath = movieFile.getFilePath();
+        try {
+            Scanner sc = new Scanner(System.in);
+            String inputPath = movieFile.getFilePath();
 
-        System.out.println("\n--- PATTERN MATCH ---");
-        System.out.println(" 1 - Search with KMP");
-        System.out.println(" 2 - Search with Boyer-Moore");
-        System.out.println(" 0 - Back");
-        System.out.print("Choose the algorithm: ");
-        int option = Integer.parseInt(sc.nextLine());
+            System.out.println("\n--- PATTERN MATCH ---");
+            System.out.println(" 1 - Search with KMP");
+            System.out.println(" 2 - Search with Boyer-Moore");
+            System.out.println(" 0 - Back");
+            System.out.print("Choose the algorithm: ");
+            int option = Integer.parseInt(sc.nextLine());
 
-        System.out.print("Enter pattern to search: ");
-        String pattern = sc.nextLine();
+            System.out.print("Enter pattern to search: ");
+            String pattern = sc.nextLine();
 
-        byte[] fileBytes = Files.readAllBytes(Paths.get(inputPath));
-        String content = new String(fileBytes, StandardCharsets.ISO_8859_1);
-        
-        int index = -1;
-        long startTime, endTime;
-        double elapsedTime = 0;
+            byte[] fileBytes = Files.readAllBytes(Paths.get(inputPath));
+            String content = new String(fileBytes, StandardCharsets.ISO_8859_1);
+            
+            int index = -1;
+            long startTime, endTime;
+            double elapsedTime = 0;
 
-        switch (option) {
-            case 1:
-                try {
-                    startTime = System.nanoTime();
-                    KMP kmp = new KMP();
-                    index = kmp.search(content, pattern);
-                    endTime = System.nanoTime();
-                    elapsedTime = (endTime - startTime) / 1e6;
+            switch (option) {
+                case 1:
+                    try {
+                        startTime = System.nanoTime();
+                        KMP kmp = new KMP();
+                        index = kmp.search(content, pattern);
+                        endTime = System.nanoTime();
+                        elapsedTime = (endTime - startTime) / 1e6;
 
-                    System.out.println((index != -1) ?
-                        "Pattern found at position: " + index :
-                        "Pattern not found.");
-                    System.out.printf("KMP Time: %.2f ms%n", elapsedTime);
-                } catch (Exception e) {
-                    System.err.println("Error using KMP: " + e.getMessage());
-                }
-                break;
+                        System.out.println((index != -1) ?
+                            "Pattern found at position: " + index :
+                            "Pattern not found.");
+                        System.out.printf("KMP Time: %.2f ms%n", elapsedTime);
+                    } catch (Exception e) {
+                        System.err.println("Error using KMP: " + e.getMessage());
+                    }
+                    break;
 
-            case 2:
-                try {
-                    startTime = System.nanoTime();
-                    BoyerMoore bm = new BoyerMoore(pattern);
-                    index = bm.search(content);
-                    endTime = System.nanoTime();
-                    elapsedTime = (endTime - startTime) / 1e6;
+                case 2:
+                    try {
+                        startTime = System.nanoTime();
+                        BoyerMoore bm = new BoyerMoore(pattern);
+                        index = bm.search(content);
+                        endTime = System.nanoTime();
+                        elapsedTime = (endTime - startTime) / 1e6;
 
-                    System.out.println((index != -1) ?
-                        "Pattern found at position: " + index :
-                        "Pattern not found.");
-                    System.out.printf("Boyer-Moore Time: %.2f ms%n", elapsedTime);
-                } catch (Exception e) {
-                    System.err.println("Error using Boyer-Moore: " + e.getMessage());
-                }
-                break;
+                        System.out.println((index != -1) ?
+                            "Pattern found at position: " + index :
+                            "Pattern not found.");
+                        System.out.printf("Boyer-Moore Time: %.2f ms%n", elapsedTime);
+                    } catch (Exception e) {
+                        System.err.println("Error using Boyer-Moore: " + e.getMessage());
+                    }
+                    break;
 
-            case 0:
-                return;
+                case 0:
+                    return;
 
-            default:
-                System.out.println("Invalid option!");
-                return;
+                default:
+                    System.out.println("Invalid option!");
+                    return;
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error in pattern search: " + e.getMessage());
+            e.printStackTrace();
         }
-
-    } catch (Exception e) {
-        System.err.println("Error in pattern search: " + e.getMessage());
-        e.printStackTrace();
     }
-}
+
+    public void encryptAllMoviesCifra() {
+        int chaveCesar = 3;
+
+        try {
+            List<Movie> todos = movieFile.readAll();
+
+            for (Movie movie : todos) {
+                
+                movie.setTitle(Cifra.cifrar(movie.getTitle(), chaveCesar));
+                movie.setType(Cifra.cifrar(movie.getType(), chaveCesar));
+                movie.setDirector(Cifra.cifrar(movie.getDirector(), chaveCesar));
+                String[] elenco = movie.getCast();
+                for (int i = 0; i < elenco.length; i++) {
+                    elenco[i] = Cifra.cifrar(elenco[i], chaveCesar);
+                }
+                movie.setCast(elenco);
+                movie.setCountry(Cifra.cifrar(movie.getCountry(), chaveCesar));
+                movie.setRating(Cifra.cifrar(movie.getRating(), chaveCesar));
+                movie.setDuration(Cifra.cifrar(movie.getDuration(), chaveCesar));
+                movie.setListedIn(Cifra.cifrar(movie.getListedIn(), chaveCesar));
+                movie.setDescription(Cifra.cifrar(movie.getDescription(), chaveCesar));
+
+                movieFile.update(movie); // Atualiza no arquivo com dados criptografados
+            }
+
+            System.out.println("Todos os filmes foram criptografados com sucesso!");
+
+        } catch (Exception e) {
+            System.err.println("Erro ao criptografar todos os registros:");
+            e.printStackTrace();
+        }
+    }
+
+    public void encryptAllMoviesRSA() {
+        try {
+            List<Movie> todos = movieFile.readAll();
+
+            for (Movie movie : todos) {
+                // Criptografa cada campo de texto apenas se não for nulo/vazio
+                movie.setTitle(handleEncryption(movie.getTitle()));
+                movie.setType(handleEncryption(movie.getType()));
+                movie.setDirector(handleEncryption(movie.getDirector()));
+                
+                String[] elenco = movie.getCast();
+                for (int i = 0; i < elenco.length; i++) {
+                    elenco[i] = handleEncryption(elenco[i]);
+                }
+                movie.setCast(elenco);
+                
+                movie.setCountry(handleEncryption(movie.getCountry()));
+                movie.setRating(handleEncryption(movie.getRating()));
+                movie.setDuration(handleEncryption(movie.getDuration()));
+                movie.setListedIn(handleEncryption(movie.getListedIn()));
+                movie.setDescription(handleEncryption(movie.getDescription()));
+
+                movieFile.update(movie);
+            }
+
+            System.out.println("Todos os filmes foram criptografados com RSA com sucesso!");
+
+        } catch (Exception e) {
+            System.err.println("Erro ao criptografar todos os registros com RSA:");
+            e.printStackTrace();
+        }
+    }
+
+    // Método auxiliar para lidar com valores nulos/vazios
+    private String handleEncryption(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return value;
+        }
+        return rsa.encrypt(value);
+    }
 
 
     public void showMovie(Movie movie) {
