@@ -34,6 +34,7 @@ public class MovieMenu {
     private final RSA rsa = new RSA();
     FileManager<Movie> movieFile;
     private static Scanner sc = new Scanner(System.in);
+    public static String encryptionType = "";
 
     public MovieMenu(String fileType) throws Exception {
         switch(fileType.toLowerCase()) {
@@ -715,6 +716,8 @@ public class MovieMenu {
                 movieFile.update(movie); // Atualiza no arquivo com dados criptografados
             }
 
+            MovieMenu.encryptionType = "cesar";
+            
             System.out.println("Todos os filmes foram criptografados com sucesso!");
 
         } catch (Exception e) {
@@ -748,6 +751,8 @@ public class MovieMenu {
                 movieFile.update(movie);
             }
 
+            MovieMenu.encryptionType = "rsa";
+
             System.out.println("Todos os filmes foram criptografados com RSA com sucesso!");
 
         } catch (Exception e) {
@@ -766,37 +771,65 @@ public class MovieMenu {
 
 
     public void showMovie(Movie movie) {
-        if (movie != null) {
-            System.out.println("\nMovie details:");
-            System.out.println("----------------------");
-            System.out.printf("Type......: %s%n", movie.getType());
-            System.out.printf("Title.....: %s%n", movie.getTitle());
-            System.out.printf("Director..: %s%n", movie.getDirector());
-            
-            // Exibir elenco
+        if (movie == null) return;
+
+        int chaveCesar = 3;
+
+        if (MovieMenu.encryptionType.equalsIgnoreCase("cesar")) {
+            movie.setType(Cifra.decifrar(movie.getType(), chaveCesar));
+            movie.setTitle(Cifra.decifrar(movie.getTitle(), chaveCesar));
+            movie.setDirector(Cifra.decifrar(movie.getDirector(), chaveCesar));
             String[] cast = movie.getCast();
-            if (cast.length > 0) {
-                System.out.print("Cast......: ");
-                for (int i = 0; i < cast.length; i++) {
-                    System.out.print(cast[i].trim());
-                    if (i < cast.length - 1) {
-                        System.out.print(", ");
-                    }
-                }
-                System.out.println();
-            } else {
-                System.out.println("Cast......: Not specified");
+            for (int i = 0; i < cast.length; i++) {
+                cast[i] = Cifra.decifrar(cast[i], chaveCesar);
             }
-            
-            System.out.printf("Country...: %s%n", movie.getCountry());
-            System.out.printf("Date Added: %s%n", movie.getDateAdded());
-            System.out.printf("Release Year: %d%n", movie.getReleaseYear());
-            System.out.printf("Rating....: %s%n", movie.getRating());
-            System.out.printf("Duration..: %s%n", movie.getDuration());
-            System.out.printf("Listed In.: %s%n", movie.getListedIn());
-            System.out.printf("Description: %s%n", movie.getDescription());
-            
-            System.out.println("----------------------");
+            movie.setCast(cast);
+            movie.setCountry(Cifra.decifrar(movie.getCountry(), chaveCesar));
+            movie.setRating(Cifra.decifrar(movie.getRating(), chaveCesar));
+            movie.setDuration(Cifra.decifrar(movie.getDuration(), chaveCesar));
+            movie.setListedIn(Cifra.decifrar(movie.getListedIn(), chaveCesar));
+            movie.setDescription(Cifra.decifrar(movie.getDescription(), chaveCesar));
+
+        } else if (MovieMenu.encryptionType.equalsIgnoreCase("rsa")) {
+            movie.setType(rsa.decrypt(movie.getType()));
+            movie.setTitle(rsa.decrypt(movie.getTitle()));
+            movie.setDirector(rsa.decrypt(movie.getDirector()));
+            String[] cast = movie.getCast();
+            for (int i = 0; i < cast.length; i++) {
+                cast[i] = rsa.decrypt(cast[i]);
+            }
+            movie.setCast(cast);
+            movie.setCountry(rsa.decrypt(movie.getCountry()));
+            movie.setRating(rsa.decrypt(movie.getRating()));
+            movie.setDuration(rsa.decrypt(movie.getDuration()));
+            movie.setListedIn(rsa.decrypt(movie.getListedIn()));
+            movie.setDescription(rsa.decrypt(movie.getDescription()));
         }
+
+        // Exibe o filme
+        System.out.println("\nMovie details:");
+        System.out.println("----------------------");
+        System.out.printf("Type......: %s%n", movie.getType());
+        System.out.printf("Title.....: %s%n", movie.getTitle());
+        System.out.printf("Director..: %s%n", movie.getDirector());
+        String[] cast = movie.getCast();
+        if (cast.length > 0) {
+            System.out.print("Cast......: ");
+            for (int i = 0; i < cast.length; i++) {
+                System.out.print(cast[i].trim());
+                if (i < cast.length - 1) System.out.print(", ");
+            }
+            System.out.println();
+        } else {
+            System.out.println("Cast......: Not specified");
+        }
+        System.out.printf("Country...: %s%n", movie.getCountry());
+        System.out.printf("Date Added: %s%n", movie.getDateAdded());
+        System.out.printf("Release Year: %d%n", movie.getReleaseYear());
+        System.out.printf("Rating....: %s%n", movie.getRating());
+        System.out.printf("Duration..: %s%n", movie.getDuration());
+        System.out.printf("Listed In.: %s%n", movie.getListedIn());
+        System.out.printf("Description: %s%n", movie.getDescription());
+        System.out.println("----------------------");
     }
 }
