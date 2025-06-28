@@ -71,7 +71,7 @@ public class MovieMenu {
             System.out.println(" 9 - Decompression");
             System.out.println(" 10 - Pattern Matching");
             System.out.println(" 11 - Encrypt Cifra");
-            System.out.println(" 12 - Encrypt RSA");
+            System.out.println(" 12 - Encrypt RSA - ONLY FOR SEQUENTIAL FILE");
             System.out.println(" 0 - Back");
 
             System.out.print("\nOption: ");
